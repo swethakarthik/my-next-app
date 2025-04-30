@@ -4,7 +4,7 @@ import { useState } from "react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Search, MessageSquare, Share2, ThumbsUp } from "lucide-react";
+import { Search, MessageSquare, Share2, ThumbsUp, Mic, Sparkles } from "lucide-react";
 import { MobileNav } from "@/components/mobile-nav";
 
 interface Post {
@@ -76,6 +76,55 @@ const mockPosts: Post[] = [
 
 export default function Home() {
   const [activeTab, setActiveTab] = useState("All");
+  const [searchState, setSearchState] = useState<'default' | 'summary' | 'expanded'>('default');
+  const [searchQuery, setSearchQuery] = useState("");
+
+  const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setSearchQuery(e.target.value);
+    if (e.target.value.length > 0) {
+      setSearchState('summary');
+    } else {
+      setSearchState('default');
+    }
+  };
+
+  const handleToggle = () => {
+    if (searchState === 'default') setSearchState('summary');
+    else if (searchState === 'summary') setSearchState('expanded');
+    else setSearchState('default');
+  };
+
+  const renderCopilot = () => {
+    if (searchState === 'summary') {
+      return (
+        <div className="flex items-center justify-between px-4 py-2 bg-white border-b shadow-sm">
+          <div className="text-sm text-blue-700 font-medium">✨ 3 events you should attend this week</div>
+          <button onClick={handleToggle} className="text-gray-500">✨</button>
+        </div>
+      );
+    }
+    if (searchState === 'expanded') {
+      return (
+        <div className="px-4 py-3 bg-white border-b shadow-md">
+          <div className="flex justify-between items-start">
+            <div>
+              <h2 className="text-lg font-semibold">✨ What do you do?</h2>
+              <p className="text-sm text-gray-600 mt-1">
+                I can help you discover opportunities, explore connections, and provide career advice.
+              </p>
+            </div>
+            <button className="text-gray-500">🎤</button>
+          </div>
+          <div className="mt-4 border-t pt-3">
+            <h3 className="font-semibold text-sm">Microsoft</h3>
+            <p className="text-sm text-gray-600">Join us for our upcoming virtual career fair! Learn about opportunities in software engineering, product management, and more.</p>
+            <div className="text-xs text-gray-500 mt-2">1,234 reactions · 56 comments</div>
+          </div>
+        </div>
+      );
+    }
+    return null;
+  };
 
   return (
     <main className="min-h-screen bg-[#f3f2ef] pb-20">
@@ -91,8 +140,14 @@ export default function Home() {
             <Input
               type="search"
               placeholder="3 events you should attend this week"
-              className="w-full pl-10 pr-4 py-2 bg-[#eef3f8] border-none rounded-full h-9 text-sm"
+              className="w-full pl-10 pr-20 bg-[#eef3f8] border-none rounded-full h-9 text-sm"
+              value={searchQuery}
+              onChange={handleSearchChange}
             />
+            <div className="absolute right-3 top-1/2 transform -translate-y-1/2 flex items-center gap-2">
+              <Mic className="h-4 w-4 text-gray-500" />
+              <Sparkles className="h-4 w-4 text-gray-500" />
+            </div>
           </div>
           <Button variant="ghost" size="icon" className="rounded-full h-10 w-10">
             <svg viewBox="0 0 24 24" className="h-5 w-5 text-gray-600">
@@ -101,6 +156,9 @@ export default function Home() {
           </Button>
         </div>
       </div>
+
+      {/* Copilot Section */}
+      {renderCopilot()}
 
       {/* Filter Tabs */}
       <div className="fixed top-[60px] left-0 right-0 bg-white z-40 border-b border-gray-200">
