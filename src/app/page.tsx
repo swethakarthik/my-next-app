@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -74,10 +74,16 @@ const mockPosts: Post[] = [
   }
 ];
 
+// Add this type for the audio recording state
+type RecordingState = 'inactive' | 'recording' | 'processing';
+
 export default function Home() {
   const [activeTab, setActiveTab] = useState("All");
   const [searchState, setSearchState] = useState<'default' | 'summary' | 'expanded'>('default');
   const [searchQuery, setSearchQuery] = useState("");
+  const [recordingState, setRecordingState] = useState<RecordingState>('inactive');
+  const mediaRecorderRef = useRef<MediaRecorder | null>(null);
+  const chunksRef = useRef<Blob[]>([]);
 
   const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setSearchQuery(e.target.value);
@@ -92,6 +98,69 @@ export default function Home() {
     if (searchState === 'default') setSearchState('summary');
     else if (searchState === 'summary') setSearchState('expanded');
     else setSearchState('default');
+  };
+
+  // Add this function to handle the recording
+  const handleMicClick = async () => {
+    if (recordingState !== 'inactive') return;
+
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      const mediaRecorder = new MediaRecorder(stream);
+      mediaRecorderRef.current = mediaRecorder;
+      chunksRef.current = [];
+
+      mediaRecorder.ondataavailable = (e) => {
+        if (e.data.size > 0) {
+          chunksRef.current.push(e.data);
+        }
+      };
+
+      mediaRecorder.onstop = async () => {
+        const audioBlob = new Blob(chunksRef.current, { type: 'audio/webm' });
+        setRecordingState('processing');
+        
+        try {
+          // Create form data for the API request
+          const formData = new FormData();
+          formData.append('file', audioBlob, 'audio.webm');
+          formData.append('model', 'whisper-1');
+
+          // Send to OpenAI API
+          const response = await fetch('https://api.openai.com/v1/audio/transcriptions', {
+            method: 'POST',
+            headers: {
+              'Authorization': `Bearer ${process.env.NEXT_PUBLIC_OPENAI_API_KEY}`,
+            },
+            body: formData,
+          });
+
+          const data = await response.json();
+          setSearchQuery(data.text);
+        } catch (error) {
+          console.error('Transcription error:', error);
+        }
+
+        setRecordingState('inactive');
+        // Stop all tracks
+        stream.getTracks().forEach(track => track.stop());
+      };
+
+      // Start recording
+      setRecordingState('recording');
+      mediaRecorder.start();
+
+      // Stop after 5 seconds
+      setTimeout(() => {
+        if (mediaRecorderRef.current && mediaRecorderRef.current.state === 'recording') {
+          mediaRecorderRef.current.stop();
+        }
+      }, 5000);
+
+    } catch (error) {
+      console.error('Recording error:', error);
+      setRecordingState('inactive');
+    }
   };
 
   const renderCopilot = () => {
@@ -145,7 +214,18 @@ export default function Home() {
               onChange={handleSearchChange}
             />
             <div className="absolute right-3 top-1/2 transform -translate-y-1/2 flex items-center gap-2">
-              <Mic className="h-4 w-4 text-gray-500" />
+              <button 
+                onClick={handleMicClick}
+                disabled={recordingState !== 'inactive'}
+                className={`p-1 rounded-full ${
+                  recordingState === 'recording' ? 'bg-red-500' : 
+                  recordingState === 'processing' ? 'bg-yellow-500' : ''
+                }`}
+              >
+                <Mic className={`h-4 w-4 ${
+                  recordingState !== 'inactive' ? 'text-white' : 'text-gray-500'
+                }`} />
+              </button>
               <Sparkles className="h-4 w-4 text-gray-500" />
             </div>
           </div>
