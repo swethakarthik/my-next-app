@@ -1,0 +1,136 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id            String    @id @default(cuid())
+  name          String?
+  email         String    @unique
+  emailVerified DateTime?
+  image         String?
+  password      String?
+  bio           String?
+  location      String?
+  website       String?
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  // Relations
+  posts         Post[]
+  connections   Connection[] @relation("UserConnections")
+  sentMessages  Message[] @relation("SentMessages")
+  receivedMessages Message[] @relation("ReceivedMessages")
+  notifications Notification[]
+  sentInvitations Invitation[] @relation("SentInvitations")
+  receivedInvitations Invitation[] @relation("ReceivedInvitations")
+  jobApplications JobApplication[]
+  postedJobs    Job[] @relation("PostedJobs")
+}
+
+model Post {
+  id        String   @id @default(cuid())
+  content   String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  authorId  String
+  author    User     @relation(fields: [authorId], references: [id])
+  likes     Like[]
+  comments  Comment[]
+}
+
+model Like {
+  id        String   @id @default(cuid())
+  postId    String
+  userId    String
+  createdAt DateTime @default(now())
+  post      Post     @relation(fields: [postId], references: [id])
+  user      User     @relation(fields: [userId], references: [id])
+}
+
+model Comment {
+  id        String   @id @default(cuid())
+  content   String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  postId    String
+  userId    String
+  post      Post     @relation(fields: [postId], references: [id])
+  user      User     @relation(fields: [userId], references: [id])
+}
+
+model Connection {
+  id        String   @id @default(cuid())
+  status    String   @default("PENDING") // PENDING, ACCEPTED, REJECTED
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  userId    String
+  connectedUserId String
+  user      User     @relation("UserConnections", fields: [userId], references: [id])
+  connectedUser User  @relation("ConnectedUser", fields: [connectedUserId], references: [id])
+}
+
+model Message {
+  id        String   @id @default(cuid())
+  content   String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  senderId  String
+  receiverId String
+  sender    User     @relation("SentMessages", fields: [senderId], references: [id])
+  receiver  User     @relation("ReceivedMessages", fields: [receiverId], references: [id])
+}
+
+model Notification {
+  id        String   @id @default(cuid())
+  type      String   // LIKE, COMMENT, CONNECTION, MESSAGE, JOB
+  content   String
+  read      Boolean  @default(false)
+  createdAt DateTime @default(now())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id])
+}
+
+model Invitation {
+  id        String   @id @default(cuid())
+  status    String   @default("PENDING") // PENDING, ACCEPTED, REJECTED
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  senderId  String
+  receiverId String
+  sender    User     @relation("SentInvitations", fields: [senderId], references: [id])
+  receiver  User     @relation("ReceivedInvitations", fields: [receiverId], references: [id])
+}
+
+model Job {
+  id          String   @id @default(cuid())
+  title       String
+  description String
+  company     String
+  location    String
+  type        String   // FULL_TIME, PART_TIME, CONTRACT, etc.
+  salary      String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  postedById  String
+  postedBy    User     @relation("PostedJobs", fields: [postedById], references: [id])
+  applications JobApplication[]
+}
+
+model JobApplication {
+  id        String   @id @default(cuid())
+  status    String   @default("PENDING") // PENDING, ACCEPTED, REJECTED
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  userId    String
+  jobId     String
+  user      User     @relation(fields: [userId], references: [id])
+  job       Job      @relation(fields: [jobId], references: [id])
+} 
