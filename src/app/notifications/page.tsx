@@ -1,137 +1,118 @@
 "use client";
 
-import { Navbar } from "@/components/navbar";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent } from "@/components/ui/card";
+import { MobileHeader } from "@/components/mobile-header";
+import { MobileNav } from "@/components/mobile-nav";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { useSession } from "next-auth/react";
-import { Bell, Check, X } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Bell, UserPlus, ThumbsUp, MessageSquare } from "lucide-react";
 
 interface Notification {
   id: string;
-  type: "connection" | "like" | "comment" | "message";
-  message: string;
-  sender: {
+  type: "connection" | "like" | "comment";
+  user: {
     name: string;
     image: string;
   };
-  timestamp: string;
+  content: string;
+  timeAgo: string;
   read: boolean;
 }
 
+const mockNotifications: Notification[] = [
+  {
+    id: "1",
+    type: "connection",
+    user: {
+      name: "John Doe",
+      image: "/avatar-placeholder.png",
+    },
+    content: "wants to connect with you",
+    timeAgo: "2h",
+    read: false,
+  },
+  {
+    id: "2",
+    type: "like",
+    user: {
+      name: "Jane Smith",
+      image: "/avatar-placeholder.png",
+    },
+    content: "liked your post",
+    timeAgo: "4h",
+    read: true,
+  },
+  {
+    id: "3",
+    type: "comment",
+    user: {
+      name: "Mike Johnson",
+      image: "/avatar-placeholder.png",
+    },
+    content: "commented on your post",
+    timeAgo: "1d",
+    read: true,
+  },
+];
+
 export default function NotificationsPage() {
-  const { data: session } = useSession();
-
-  if (!session?.user) {
-    return (
-      <main className="min-h-screen bg-background">
-        <Navbar />
-        <div className="container mx-auto pt-16">
-          <div className="text-center">Please sign in to view notifications</div>
-        </div>
-      </main>
-    );
-  }
-
-  // Mock notifications data
-  const notifications: Notification[] = [
-    {
-      id: "1",
-      type: "connection",
-      message: "wants to connect with you",
-      sender: {
-        name: "John Doe",
-        image: "https://github.com/shadcn.png",
-      },
-      timestamp: "2024-04-30T10:00:00Z",
-      read: false,
-    },
-    {
-      id: "2",
-      type: "like",
-      message: "liked your post",
-      sender: {
-        name: "Jane Smith",
-        image: "https://github.com/shadcn.png",
-      },
-      timestamp: "2024-04-29T15:30:00Z",
-      read: true,
-    },
-    {
-      id: "3",
-      type: "comment",
-      message: "commented on your post",
-      sender: {
-        name: "Mike Johnson",
-        image: "https://github.com/shadcn.png",
-      },
-      timestamp: "2024-04-28T09:15:00Z",
-      read: true,
-    },
-  ];
-
   return (
-    <main className="min-h-screen bg-background">
-      <Navbar />
-      <div className="container mx-auto pt-16">
-        <div className="max-w-2xl mx-auto space-y-4">
-          <div className="flex items-center justify-between">
-            <h1 className="text-2xl font-bold">Notifications</h1>
-            <Button variant="ghost" size="sm">
-              Mark all as read
-            </Button>
-          </div>
+    <main className="min-h-screen bg-gray-50 pb-20">
+      <MobileHeader title="Notifications" />
 
-          <div className="space-y-4">
-            {notifications.map((notification) => (
-              <Card
-                key={notification.id}
-                className={notification.read ? "opacity-75" : ""}
-              >
-                <CardContent className="p-4">
-                  <div className="flex items-start space-x-4">
-                    <Avatar>
-                      <AvatarImage src={notification.sender.image} />
-                      <AvatarFallback>
-                        {notification.sender.name[0]}
-                      </AvatarFallback>
-                    </Avatar>
-                    <div className="flex-1">
-                      <div className="flex items-center justify-between">
-                        <p className="text-sm">
-                          <span className="font-medium">
-                            {notification.sender.name}
-                          </span>{" "}
-                          {notification.message}
-                        </p>
-                        <div className="flex items-center space-x-2">
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            className="h-8 w-8"
-                          >
-                            <Check className="h-4 w-4" />
-                          </Button>
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            className="h-8 w-8"
-                          >
-                            <X className="h-4 w-4" />
-                          </Button>
-                        </div>
-                      </div>
-                      <p className="text-xs text-muted-foreground mt-1">
-                        {new Date(notification.timestamp).toLocaleDateString()}
-                      </p>
-                    </div>
+      <div className="mt-16">
+        {mockNotifications.map((notification) => (
+          <div
+            key={notification.id}
+            className={`bg-white border-b border-gray-200 px-4 py-3 ${
+              !notification.read ? "bg-blue-50" : ""
+            }`}
+          >
+            <div className="flex items-start gap-3">
+              <div className="relative">
+                <Avatar className="h-12 w-12">
+                  <AvatarImage src={notification.user.image} />
+                  <AvatarFallback>{notification.user.name[0]}</AvatarFallback>
+                </Avatar>
+                <div className="absolute -bottom-1 -right-1 bg-white rounded-full p-1">
+                  {notification.type === "connection" && (
+                    <UserPlus className="h-4 w-4 text-blue-600" />
+                  )}
+                  {notification.type === "like" && (
+                    <ThumbsUp className="h-4 w-4 text-blue-600" />
+                  )}
+                  {notification.type === "comment" && (
+                    <MessageSquare className="h-4 w-4 text-blue-600" />
+                  )}
+                </div>
+              </div>
+              <div className="flex-1">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <span className="font-semibold">{notification.user.name}</span>{" "}
+                    <span className="text-gray-600">{notification.content}</span>
                   </div>
-                </CardContent>
-              </Card>
-            ))}
+                  <span className="text-sm text-gray-500">{notification.timeAgo}</span>
+                </div>
+                {notification.type === "connection" && (
+                  <div className="flex gap-2 mt-2">
+                    <Button
+                      variant="default"
+                      className="flex-1 bg-[#057642] hover:bg-[#057642]"
+                    >
+                      Accept
+                    </Button>
+                    <Button variant="outline" className="flex-1">
+                      Ignore
+                    </Button>
+                  </div>
+                )}
+              </div>
+            </div>
           </div>
-        </div>
+        ))}
       </div>
+
+      <MobileNav />
     </main>
   );
 } 

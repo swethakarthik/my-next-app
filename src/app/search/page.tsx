@@ -1,120 +1,136 @@
 "use client";
 
 import { useState } from "react";
-import { Navbar } from "@/components/navbar";
-import { Button } from "@/components/ui/button";
+import { MobileHeader } from "@/components/mobile-header";
+import { MobileNav } from "@/components/mobile-nav";
 import { Input } from "@/components/ui/input";
-import { Card, CardContent, CardHeader } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Search } from "lucide-react";
+import { Search, Users, Building2, Briefcase } from "lucide-react";
 
 interface SearchResult {
   id: string;
-  type: "user" | "post" | "job";
+  type: "person" | "company" | "job";
   title: string;
-  description: string;
+  subtitle: string;
   image?: string;
-  author?: {
-    name: string;
-    image: string;
-  };
 }
 
+const mockResults: SearchResult[] = [
+  {
+    id: "1",
+    type: "person",
+    title: "John Doe",
+    subtitle: "Software Engineer at Tech Corp",
+    image: "/avatar-placeholder.png",
+  },
+  {
+    id: "2",
+    type: "company",
+    title: "Tech Corp",
+    subtitle: "Technology • 10,001+ employees",
+    image: "/company-logo-placeholder.png",
+  },
+  {
+    id: "3",
+    type: "job",
+    title: "Senior Software Engineer",
+    subtitle: "Tech Corp • San Francisco, CA",
+  },
+];
+
 export default function SearchPage() {
-  const [query, setQuery] = useState("");
-  const [results, setResults] = useState<SearchResult[]>([]);
-  const [isLoading, setIsLoading] = useState(false);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [activeFilter, setActiveFilter] = useState<"all" | "people" | "companies" | "jobs">("all");
 
-  const handleSearch = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!query.trim()) return;
-
-    setIsLoading(true);
-    try {
-      // In a real app, you would make an API call to your semantic search endpoint
-      // For now, we'll simulate some results
-      const mockResults: SearchResult[] = [
-        {
-          id: "1",
-          type: "user",
-          title: "John Doe",
-          description: "Software Engineer at Tech Corp",
-          image: "https://github.com/shadcn.png",
-        },
-        {
-          id: "2",
-          type: "post",
-          title: "Exciting News!",
-          description: "Just launched our new product...",
-          author: {
-            name: "Jane Smith",
-            image: "https://github.com/shadcn.png",
-          },
-        },
-        {
-          id: "3",
-          type: "job",
-          title: "Senior Frontend Developer",
-          description: "Looking for an experienced React developer...",
-        },
-      ];
-
-      setResults(mockResults);
-    } catch (error) {
-      console.error("Search failed:", error);
-    } finally {
-      setIsLoading(false);
-    }
-  };
+  const filteredResults = mockResults.filter((result) => {
+    if (activeFilter === "all") return true;
+    if (activeFilter === "people" && result.type === "person") return true;
+    if (activeFilter === "companies" && result.type === "company") return true;
+    if (activeFilter === "jobs" && result.type === "job") return true;
+    return false;
+  });
 
   return (
-    <main className="min-h-screen bg-background">
-      <Navbar />
-      <div className="container mx-auto pt-16">
-        <div className="max-w-2xl mx-auto space-y-4">
-          <form onSubmit={handleSearch} className="flex space-x-2">
-            <Input
-              placeholder="Search for people, posts, or jobs..."
-              value={query}
-              onChange={(e) => setQuery(e.target.value)}
-              className="flex-1"
-            />
-            <Button type="submit" disabled={isLoading}>
-              <Search className="h-4 w-4 mr-2" />
-              Search
-            </Button>
-          </form>
+    <main className="min-h-screen bg-gray-50 pb-20">
+      <MobileHeader
+        title="Search"
+        showSearch
+        onSearch={setSearchQuery}
+      />
 
-          {isLoading && <div className="text-center">Searching...</div>}
-
-          <div className="space-y-4">
-            {results.map((result) => (
-              <Card key={result.id}>
-                <CardHeader className="flex flex-row items-center space-x-4">
-                  {result.type === "user" && (
-                    <Avatar>
-                      <AvatarImage src={result.image} />
-                      <AvatarFallback>{result.title[0]}</AvatarFallback>
-                    </Avatar>
-                  )}
-                  {result.type === "post" && result.author && (
-                    <Avatar>
-                      <AvatarImage src={result.author.image} />
-                      <AvatarFallback>{result.author.name[0]}</AvatarFallback>
-                    </Avatar>
-                  )}
-                  <div>
-                    <p className="font-medium">{result.title}</p>
-                    <p className="text-sm text-muted-foreground">
-                      {result.description}
-                    </p>
-                  </div>
-                </CardHeader>
-              </Card>
-            ))}
-          </div>
+      {/* Search Filters */}
+      <div className="mt-16 px-4 py-2 bg-white border-b border-gray-200">
+        <div className="flex gap-2 overflow-x-auto">
+          <Button
+            variant={activeFilter === "all" ? "default" : "outline"}
+            className={`rounded-full text-sm px-4 py-1.5 h-8 ${
+              activeFilter === "all" ? "bg-[#057642] hover:bg-[#057642]" : "border-gray-300"
+            }`}
+            onClick={() => setActiveFilter("all")}
+          >
+            All
+          </Button>
+          <Button
+            variant={activeFilter === "people" ? "default" : "outline"}
+            className={`rounded-full text-sm px-4 py-1.5 h-8 ${
+              activeFilter === "people" ? "bg-[#057642] hover:bg-[#057642]" : "border-gray-300"
+            }`}
+            onClick={() => setActiveFilter("people")}
+          >
+            People
+          </Button>
+          <Button
+            variant={activeFilter === "companies" ? "default" : "outline"}
+            className={`rounded-full text-sm px-4 py-1.5 h-8 ${
+              activeFilter === "companies" ? "bg-[#057642] hover:bg-[#057642]" : "border-gray-300"
+            }`}
+            onClick={() => setActiveFilter("companies")}
+          >
+            Companies
+          </Button>
+          <Button
+            variant={activeFilter === "jobs" ? "default" : "outline"}
+            className={`rounded-full text-sm px-4 py-1.5 h-8 ${
+              activeFilter === "jobs" ? "bg-[#057642] hover:bg-[#057642]" : "border-gray-300"
+            }`}
+            onClick={() => setActiveFilter("jobs")}
+          >
+            Jobs
+          </Button>
         </div>
       </div>
+
+      {/* Search Results */}
+      <div className="mt-2">
+        {filteredResults.map((result) => (
+          <div
+            key={result.id}
+            className="bg-white border-b border-gray-200 px-4 py-3"
+          >
+            <div className="flex items-center gap-3">
+              {result.image ? (
+                <Avatar className="h-12 w-12">
+                  <AvatarImage src={result.image} />
+                  <AvatarFallback>{result.title[0]}</AvatarFallback>
+                </Avatar>
+              ) : (
+                <div className="h-12 w-12 rounded-full bg-gray-100 flex items-center justify-center">
+                  {result.type === "person" && <Users className="h-6 w-6 text-gray-500" />}
+                  {result.type === "company" && <Building2 className="h-6 w-6 text-gray-500" />}
+                  {result.type === "job" && <Briefcase className="h-6 w-6 text-gray-500" />}
+                </div>
+              )}
+              <div>
+                <h3 className="font-semibold">{result.title}</h3>
+                <p className="text-sm text-gray-600">{result.subtitle}</p>
+              </div>
+            </div>
+          </div>
+        ))}
+      </div>
+
+      <MobileNav />
     </main>
   );
 } 
